@@ -4,7 +4,6 @@
 
 #include <fstream>
 #include <iostream>
-#include <vector>
 
 #include "openglapi.h"
 #include "log.h"
@@ -18,11 +17,14 @@ std::string read_file(const std::string &filepath)
 
 Shader::Shader(const std::string &vertexShaderPath, const std::string &fragmentShaderPath)
 {
-    auto vertexCode = read_file(vertexShaderPath).c_str();
-    auto fragmentCode = read_file(fragmentShaderPath).c_str();
+    auto vertexCode = read_file(vertexShaderPath);
+    auto fragmentCode = read_file(fragmentShaderPath);
+    auto vertexSource = vertexCode.c_str();
+    auto fragmentSource = fragmentCode.c_str();
+
 
     uint32_t vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    GLCall(glShaderSource(vertexShader, 1, &vertexCode, nullptr));
+    GLCall(glShaderSource(vertexShader, 1, &vertexSource, nullptr));
     GLCall(glCompileShader(vertexShader));
 
     int success;
@@ -35,7 +37,7 @@ Shader::Shader(const std::string &vertexShaderPath, const std::string &fragmentS
     }
 
     uint32_t fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    GLCall(glShaderSource(fragmentShader, 1, &fragmentCode, nullptr));
+    GLCall(glShaderSource(fragmentShader, 1, &fragmentSource, nullptr));
     GLCall(glCompileShader(fragmentShader));
 
     GLCall(glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success));
