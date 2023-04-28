@@ -10,12 +10,13 @@
 
 int main()
 {
-    LOG_INFO("Hello, World!");
-    LOG_WARN("Hello, World!");
-    LOG_ERROR("Hello, World!");
-    LOG_FATAL("Hello, World!");
+    LOG_INFO("Le game");
     
-    glfwInit();
+    if (!glfwInit())
+    {
+        LOG_ERROR("Failed to initialize GLFW");
+        return -1;
+    }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -25,14 +26,21 @@ int main()
     GLFWwindow *window = glfwCreateWindow(800, 600, "OpenGL", nullptr, nullptr);
     if (window == nullptr)
     {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        LOG_ERROR("Failed to create GLFW window");
         glfwTerminate();
         return -1;
     }
 
     glfwMakeContextCurrent(window);
 
-    gladLoadGL();
+    if(!gladLoadGL())
+    {
+        LOG_ERROR("Failed to initialize GLAD");
+        return -1;
+    }
+
+    std::string version = (char*)glGetString(GL_VERSION);
+    LOG_INFO("OpenGL version: {}", version);
 
     glViewport(0, 0, 800, 600);
 
