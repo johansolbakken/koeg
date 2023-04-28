@@ -7,6 +7,7 @@
 #include <string>
 
 #include "shader.h"
+#include "vertexarray.h"
 
 int main()
 {
@@ -50,22 +51,18 @@ int main()
             0.0f,  0.5f, 0.0f  // top
     };
 
+    uint32_t indices[] = {
+            0, 1, 2
+    };
+
     Shader shader("shaders/default.vert", "shaders/default.frag");
     shader.bind();
 
-    uint32_t VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
+    auto vao = std::make_shared<VertexArray>();
+    auto vbo = std::make_shared<VertexBuffer>(vertices, sizeof(vertices));
+    vao->addBuffer(vbo);
 
-    uint32_t VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),
-                 vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-                          3 * sizeof(float), (void*) nullptr);
-    glEnableVertexAttribArray(0);
+    auto ebo = std::make_shared<IndexBuffer>(indices, sizeof(indices) / sizeof(uint32_t));
 
     while (!glfwWindowShouldClose(window))
     {
@@ -73,8 +70,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         shader.bind();
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        vao->bind();
+        ebo->bind();
+        glDrawElements(GL_TRIANGLES, (int) ebo->count(), GL_UNSIGNED_INT, nullptr);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
