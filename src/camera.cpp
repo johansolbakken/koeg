@@ -106,3 +106,12 @@ void Camera::setProjection(CameraProjection projection)
 {
 	m_projection = projection;
 }
+
+void Camera::setPositionWithLookAt(const glm::vec3& position, const glm::vec3& lookAt)
+{
+	m_position = position;
+	m_forward = glm::normalize(lookAt - position);
+	m_right = glm::normalize(glm::cross(m_forward, glm::vec3(0.0f, 1.0f, 0.0f)));
+
+	update(0);
+}

@@ -47,6 +47,8 @@ public:
 
 	void setProjection(CameraProjection projection);
 
+	void setPositionWithLookAt(const glm::vec3& position, const glm::vec3& lookAt);
+
 private:
 	glm::vec3 m_position;
 	glm::vec3 m_forward;

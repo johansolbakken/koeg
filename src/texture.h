@@ -2,10 +2,16 @@
 
 #include <string>
 
+enum class TextureType
+{
+	Rgba,
+	Red
+};
+
 class Texture
 {
 public:
-	Texture(const std::string& path);
+	Texture(TextureType type, const std::string& path);
 
 	~Texture();
 
@@ -29,4 +35,5 @@ private:
 	std::string m_filePath;
 	uint8_t* m_localBuffer;
 	int m_width, m_height, m_bpp;
+	TextureType m_type;
 };

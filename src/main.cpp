@@ -23,6 +23,19 @@ double getTime()
 
 extern Window* inputWindow;
 
+struct Material
+{
+	std::pair<uint32_t, std::shared_ptr<Texture>> diffuse;
+	std::pair<uint32_t, std::shared_ptr<Texture>> specular;
+	float shininess;
+
+	void bind()
+	{
+		diffuse.second->bind(diffuse.first);
+		specular.second->bind(specular.first);
+	}
+};
+
 int main()
 {
 	LOG_INFO("Le game");
@@ -135,11 +148,39 @@ int main()
 	auto ebo = std::make_shared<IndexBuffer>(indices, sizeof(indices) / sizeof(uint32_t));
 	vao->setIndexBuffer(ebo);
 
+	// Plane vertices
+	float planeVertices[] = {
+			// pos, color, tex, normal
+			-1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+			-1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
+			1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+			1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0
+
+	};
+	uint32_t planeIndices[] = {
+			0, 1, 2,
+			2, 3, 0
+	};
+
+	auto planeVao = std::make_shared<VertexArray>();
+	auto planeVbo = std::make_shared<VertexBuffer>(planeVertices, sizeof(planeVertices));
+	planeVao->addBuffer(planeVbo, {
+			{ 3, VertexDataType::Float, false },
+			{ 3, VertexDataType::Float, false },
+			{ 2, VertexDataType::Float, false },
+			{ 3, VertexDataType::Float, false }
+	});
+	auto planeEbo = std::make_shared<IndexBuffer>(planeIndices, sizeof(planeIndices) / sizeof(uint32_t));
+	planeVao->setIndexBuffer(planeEbo);
+
 	// Texture
-	Texture texture("textures/popcat.jpg");
-	Texture brick("textures/brick.jpeg");
+	Texture texture(TextureType::Rgba, "textures/popcat.jpg");
+	Texture brick(TextureType::Rgba, "textures/brick.jpeg");
+	Texture planks(TextureType::Rgba, "textures/planks.png");
+	Texture planksSpec(TextureType::Red, "textures/planksSpec.png");
 
 	auto camera = std::make_shared<Camera>();
+	camera->setPositionWithLookAt(glm::vec3(-2.0f, 2.0f, -2.0f), glm::vec3(0.0f));
 	auto cameraController = std::make_shared<CameraController>(camera);
 
 	glm::vec3 lightPos(0.5f, 0.5f, 0.5f);
@@ -150,11 +191,7 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 
 	double lastTime = getTime();
-	while (!window.
-
-			shouldClose()
-
-			)
+	while (!window.shouldClose())
 	{
 		double currentTime = getTime();
 		double deltaTime = currentTime - lastTime;
@@ -165,6 +202,7 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		if (false)
 		{
 			static float angle = 0.0;
 			angle += 0.0f * deltaTime;
@@ -175,7 +213,6 @@ int main()
 			auto projection = camera->projectionMatrix();
 			auto mvp = projection * view * model;
 
-			texture.bind();
 			shader.bind();
 			shader.setUniform1i("texture1", 0);
 			shader.setUniformMat4f("mvp", mvp);
@@ -199,6 +236,27 @@ int main()
 			cubeVao->bind();
 
 			glDrawElements(GL_TRIANGLES, (int)cubeVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
+		}
+
+		{
+			auto model = glm::mat4(1.0f);
+			auto view = camera->viewMatrix();
+			auto projection = camera->projectionMatrix();
+			auto mvp = projection * view * model;
+
+			planks.bind();
+			planksSpec.bind(1);
+			shader.bind();
+			shader.setUniform1i("texture1", 0);
+			shader.setUniform1i("texture2", 1);
+			shader.setUniformMat4f("mvp", mvp);
+			shader.setUniform4f("lightColor", lightColor);
+			shader.setUniformMat4f("model", model);
+			shader.setUniform3f("lightPos", lightPos);
+			shader.setUniform3f("viewPos", camera->position());
+			planeVao->bind();
+
+			glDrawElements(GL_TRIANGLES, (int)planeVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
 		}
 
 		window.update();
