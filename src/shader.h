@@ -18,7 +18,11 @@ public:
 	void unbind() const;
 
 	void setUniform1i(const std::string& name, int value);
+
 	void setUniformMat4f(const std::string& name, const glm::mat4& matrix);
+
+	void setUniform3f(const std::string& name, const glm::vec3& vector);
+	void setUniform4f(const std::string& name, const glm::vec4& vector);
 
 private:
 	uint32_t m_rendererId;

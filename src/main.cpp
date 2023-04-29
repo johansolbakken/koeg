@@ -66,19 +66,37 @@ int main()
 	// pyramid
 
 	float pyramidVertices[] = {
-			-0.5, 0.0, 0.5, 0.83, 0.70, 0.44, 0.0, 0.0,
-			-0.5, 0.0, -0.5, 0.83, 0.70, 0.44, 5.0, 0.0,
-			0.5, 0.0, -0.5, 0.83, 0.70, 0.44, 0.0, 0.0,
-			0.5, 0.0, 0.5, 0.83, 0.70, 0.44, 5.0, 0.0,
-			0.0, 0.8, 0.0, 0.92, 0.86, 0.76, 2.5, 5.0 };
+			//     COORDINATES     /        COLORS          /    TexCoord   /        NORMALS       //
+			-0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, // Bottom side
+			-0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 5.0f, 0.0f, -1.0f, 0.0f, // Bottom side
+			0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 5.0f, 0.0f, -1.0f, 0.0f, // Bottom side
+			0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, 0.0f, -1.0f, 0.0f, // Bottom side
+
+			-0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, -0.8f, 0.5f, 0.0f, // Left Side
+			-0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, -0.8f, 0.5f, 0.0f, // Left Side
+			0.0f, 0.8f, 0.0f, 0.92f, 0.86f, 0.76f, 2.5f, 5.0f, -0.8f, 0.5f, 0.0f, // Left Side
+
+			-0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, 0.0f, 0.5f, -0.8f, // Non-facing side
+			0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, 0.0f, 0.5f, -0.8f, // Non-facing side
+			0.0f, 0.8f, 0.0f, 0.92f, 0.86f, 0.76f, 2.5f, 5.0f, 0.0f, 0.5f, -0.8f, // Non-facing side
+
+			0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, 0.8f, 0.5f, 0.0f, // Right side
+			0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, 0.8f, 0.5f, 0.0f, // Right side
+			0.0f, 0.8f, 0.0f, 0.92f, 0.86f, 0.76f, 2.5f, 5.0f, 0.8f, 0.5f, 0.0f, // Right side
+
+			0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, 0.0f, 0.5f, 0.8f, // Facing side
+			-0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, 0.0f, 0.5f, 0.8f, // Facing side
+			0.0f, 0.8f, 0.0f, 0.92f, 0.86f, 0.76f, 2.5f, 5.0f, 0.0f, 0.5f, 0.8f  // Facing side
+	};
 
 	auto pyramidIndices = new uint32_t[18]{
-			0, 1, 2,
-			2, 3, 0,
-			0, 4, 1,
-			1, 4, 2,
-			2, 4, 3,
-			3, 4, 0 };
+			0, 1, 2, // Bottom side
+			0, 2, 3, // Bottom side
+			4, 6, 5, // Left side
+			7, 9, 8, // Non-facing side
+			10, 12, 11, // Right side
+			13, 15, 14 // Facing side
+	};
 
 	auto pyramidVao = std::make_shared<VertexArray>();
 	auto pyramidVbo = std::make_shared<VertexBuffer>(pyramidVertices, sizeof(pyramidVertices));
@@ -86,7 +104,8 @@ int main()
 	pyramidVao->addBuffer(pyramidVbo, {
 			{ 3, VertexDataType::Float },
 			{ 3, VertexDataType::Float },
-			{ 2, VertexDataType::Float }
+			{ 2, VertexDataType::Float },
+			{ 3, VertexDataType::Float }
 	});
 	pyramidVao->setIndexBuffer(pyramidIbo);
 
@@ -123,6 +142,11 @@ int main()
 	auto camera = std::make_shared<Camera>();
 	auto cameraController = std::make_shared<CameraController>(camera);
 
+	glm::vec3 lightPos(0.5f, 0.5f, 0.5f);
+	glm::vec4 lightColor(0.8f, 0.6f, 0.3f, 1.0f);
+	auto lightModel = glm::mat4(1.0f);
+	lightModel = glm::translate(lightModel, lightPos);
+
 	glEnable(GL_DEPTH_TEST);
 
 	double lastTime = getTime();
@@ -142,37 +166,36 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		{
+			static float angle = 0.0;
+			angle += 0.0f * deltaTime;
 			auto model = glm::mat4(1.0f);
-			model = glm::rotate(model, (float)getTime() / 2.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::rotate(model, (float)angle, glm::vec3(0.0f, 1.0f, 0.0f));
 
 			auto view = camera->viewMatrix();
 			auto projection = camera->projectionMatrix();
 			auto mvp = projection * view * model;
 
-			texture.
-
-					bind();
-
-			shader.
-
-					bind();
-
+			texture.bind();
+			shader.bind();
 			shader.setUniform1i("texture1", 0);
 			shader.setUniformMat4f("mvp", mvp);
+			shader.setUniform4f("lightColor", lightColor);
+			shader.setUniformMat4f("model", model);
+			shader.setUniform3f("lightPos", lightPos);
+			shader.setUniform3f("viewPos", camera->position());
 			pyramidVao->bind();
 
 			glDrawElements(GL_TRIANGLES, (int)pyramidVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
 		}
 
 		{
-			auto model = glm::mat4(1.0f);
-			model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
 			auto view = camera->viewMatrix();
 			auto projection = camera->projectionMatrix();
-			auto mvp = projection * view * model;
+			auto mvp = projection * view * lightModel;
 
 			lightShader.bind();
 			lightShader.setUniformMat4f("mvp", mvp);
+			lightShader.setUniform4f("lightColor", lightColor);
 			cubeVao->bind();
 
 			glDrawElements(GL_TRIANGLES, (int)cubeVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
