@@ -47,6 +47,13 @@ void CameraController::update(double deltaTime)
 			m_camera->setPosition(m_camera->position() - m_camera->up() * static_cast<float>(deltaTime) * m_speed);
 		}
 
+		if (m_firstMouse)
+		{
+			Input::resetMouseDelta();
+			m_firstMouse = false;
+			return;
+		}
+
 		float xOffset = Input::mouseX() - Input::mouseXLast();
 		float yOffset = Input::mouseYLast() - Input::mouseY();
 
