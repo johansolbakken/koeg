@@ -82,6 +82,7 @@ enum class KeyCode
 	PrintScreen = 283,
 
 	LeftShift = 340,
+	LeftAlt = 342,
 };
 
 enum class MouseButton

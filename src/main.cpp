@@ -178,10 +178,13 @@ int main()
 	Texture brick(TextureType::Rgba, "textures/brick.jpeg");
 	Texture planks(TextureType::Rgba, "textures/planks.png");
 	Texture planksSpec(TextureType::Red, "textures/planksSpec.png");
-
+/*
 	auto camera = std::make_shared<Camera>();
 	camera->setPositionWithLookAt(glm::vec3(-2.0f, 2.0f, -2.0f), glm::vec3(0.0f));
-	auto cameraController = std::make_shared<CameraController>(camera);
+	auto cameraController = std::make_shared<CameraController>(camera);*/
+
+	Hazel::EditorCamera editorCamera;
+	editorCamera.SetViewportSize(window.width(), window.height());
 
 	glm::vec3 lightPos(0.5f, 0.5f, 0.5f);
 	glm::vec4 lightColor(0.8f, 0.6f, 0.3f, 1.0f);
@@ -197,7 +200,7 @@ int main()
 		double deltaTime = currentTime - lastTime;
 		lastTime = currentTime;
 
-		cameraController->update(deltaTime);
+		editorCamera.OnUpdate(deltaTime);
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -209,9 +212,8 @@ int main()
 			auto model = glm::mat4(1.0f);
 			model = glm::rotate(model, (float)angle, glm::vec3(0.0f, 1.0f, 0.0f));
 
-			auto view = camera->viewMatrix();
-			auto projection = camera->projectionMatrix();
-			auto mvp = projection * view * model;
+			auto projection = editorCamera.GetViewProjection();
+			auto mvp = projection * model;
 
 			shader.bind();
 			shader.setUniform1i("texture1", 0);
@@ -219,16 +221,15 @@ int main()
 			shader.setUniform4f("lightColor", lightColor);
 			shader.setUniformMat4f("model", model);
 			shader.setUniform3f("lightPos", lightPos);
-			shader.setUniform3f("viewPos", camera->position());
+			shader.setUniform3f("viewPos", editorCamera.GetPosition());
 			pyramidVao->bind();
 
 			glDrawElements(GL_TRIANGLES, (int)pyramidVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
 		}
 
 		{
-			auto view = camera->viewMatrix();
-			auto projection = camera->projectionMatrix();
-			auto mvp = projection * view * lightModel;
+			auto projection = editorCamera.GetViewProjection();
+			auto mvp = projection * lightModel;
 
 			lightShader.bind();
 			lightShader.setUniformMat4f("mvp", mvp);
@@ -240,9 +241,8 @@ int main()
 
 		{
 			auto model = glm::mat4(1.0f);
-			auto view = camera->viewMatrix();
-			auto projection = camera->projectionMatrix();
-			auto mvp = projection * view * model;
+			auto projection = editorCamera.GetViewProjection();
+			auto mvp = projection * model;
 
 			planks.bind();
 			planksSpec.bind(1);
@@ -253,7 +253,7 @@ int main()
 			shader.setUniform4f("lightColor", lightColor);
 			shader.setUniformMat4f("model", model);
 			shader.setUniform3f("lightPos", lightPos);
-			shader.setUniform3f("viewPos", camera->position());
+			shader.setUniform3f("viewPos", editorCamera.GetPosition());
 			planeVao->bind();
 
 			glDrawElements(GL_TRIANGLES, (int)planeVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
