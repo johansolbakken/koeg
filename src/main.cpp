@@ -11,73 +11,75 @@
 
 int main()
 {
-    LOG_INFO("Le game");
-    
-    if (!glfwInit())
-    {
-        LOG_ERROR("Failed to initialize GLFW");
-        return -1;
-    }
+	LOG_INFO("Le game");
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	if (!glfwInit())
+	{
+		LOG_ERROR("Failed to initialize GLFW");
+		return -1;
+	}
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "OpenGL", nullptr, nullptr);
-    if (window == nullptr)
-    {
-        LOG_ERROR("Failed to create GLFW window");
-        glfwTerminate();
-        return -1;
-    }
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    glfwMakeContextCurrent(window);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL", nullptr, nullptr);
+	if (window == nullptr)
+	{
+		LOG_ERROR("Failed to create GLFW window");
+		glfwTerminate();
+		return -1;
+	}
 
-    if(!gladLoadGL())
-    {
-        LOG_ERROR("Failed to initialize GLAD");
-        return -1;
-    }
+	glfwMakeContextCurrent(window);
 
-    std::string version = (char*)glGetString(GL_VERSION);
-    LOG_INFO("OpenGL version: {}", version);
+	if (!gladLoadGL())
+	{
+		LOG_ERROR("Failed to initialize GLAD");
+		return -1;
+	}
 
-    glViewport(0, 0, 800, 600);
+	std::string version = (char*)glGetString(GL_VERSION);
+	LOG_INFO("OpenGL version: {}", version);
 
-    float vertices[] = {
-            -0.5f, -0.5f, 0.0f, // left
-            0.5f, -0.5f, 0.0f, // right
-            0.0f,  0.5f, 0.0f  // top
-    };
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	glViewport(0, 0, width, height);
 
-    uint32_t indices[] = {
-            0, 1, 2
-    };
+	float vertices[] = {
+			-0.5f, -0.5f, 0.0f, // left
+			0.5f, -0.5f, 0.0f, // right
+			0.0f, 0.5f, 0.0f  // top
+	};
 
-    Shader shader("shaders/default.vert", "shaders/default.frag");
-    shader.bind();
+	uint32_t indices[] = {
+			0, 1, 2
+	};
 
-    auto vao = std::make_shared<VertexArray>();
-    auto vbo = std::make_shared<VertexBuffer>(vertices, sizeof(vertices));
-    vao->addBuffer(vbo);
+	Shader shader("shaders/default.vert", "shaders/default.frag");
+	shader.bind();
 
-    auto ebo = std::make_shared<IndexBuffer>(indices, sizeof(indices) / sizeof(uint32_t));
+	auto vao = std::make_shared<VertexArray>();
+	auto vbo = std::make_shared<VertexBuffer>(vertices, sizeof(vertices));
+	vao->addBuffer(vbo);
 
-    while (!glfwWindowShouldClose(window))
-    {
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+	auto ebo = std::make_shared<IndexBuffer>(indices, sizeof(indices) / sizeof(uint32_t));
 
-        shader.bind();
-        vao->bind();
-        ebo->bind();
-        glDrawElements(GL_TRIANGLES, (int) ebo->count(), GL_UNSIGNED_INT, nullptr);
+	while (!glfwWindowShouldClose(window))
+	{
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
+		shader.bind();
+		vao->bind();
+		ebo->bind();
+		glDrawElements(GL_TRIANGLES, (int)ebo->count(), GL_UNSIGNED_INT, nullptr);
 
-    glfwTerminate();
-    return 0;
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glfwTerminate();
+	return 0;
 }
