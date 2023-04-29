@@ -1,10 +1,12 @@
 #include <glad/glad.h>
+#include "openglapi.h"
 #include <GLFW/glfw3.h>
 
 #include "log.h"
 
 #include "shader.h"
 #include "vertexarray.h"
+#include "texture.h"
 
 int main()
 {
@@ -45,13 +47,16 @@ int main()
 	glViewport(0, 0, width, height);
 
 	float vertices[] = {
-			-0.5f, -0.5f, 0.0f, 1.0, 0.0, 0.0, 1.0,
-			0.5f, -0.5f, 0.0f, 0.0, 1.0, 0.0, 1.0,
-			0.0f, 0.5f, 0.0f, 0.0, 0.0, 1.0, 1.0
+			// pos, color, tex
+			-0.5f, -0.5f, 0.0f, 1.0, 0.0, 0.0, 0.0, 0.0,
+			-0.5f, 0.5f, 0.0f, 0.0, 1.0, 0.0, 0.0, 1.0,
+			0.5f, 0.5f, 0.0f, 0.0, 0.0, 1.0, 1.0, 1.0,
+			0.5f, -0.5f, 0.0f, 1.0, 1.0, 1.0, 1.0, 0.0
 	};
 
 	uint32_t indices[] = {
-			0, 1, 2
+			0, 1, 2,
+			2, 3, 0
 	};
 
 	Shader shader("shaders/default.vert", "shaders/default.frag");
@@ -61,18 +66,24 @@ int main()
 	auto vbo = std::make_shared<VertexBuffer>(vertices, sizeof(vertices));
 	vao->addBuffer(vbo, {
 			{ 3, VertexDataType::Float, false },
-			{ 4, VertexDataType::Float, false }
+			{ 3, VertexDataType::Float, false },
+			{ 2, VertexDataType::Float, false }
 	});
 
 	auto ebo = std::make_shared<IndexBuffer>(indices, sizeof(indices) / sizeof(uint32_t));
 	vao->setIndexBuffer(ebo);
+
+	// Texture
+	Texture texture("textures/popcat.jpg");
 
 	while (!glfwWindowShouldClose(window))
 	{
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		texture.bind();
 		shader.bind();
+		shader.setUniform1i("texture1", 0);
 		vao->bind();
 		glDrawElements(GL_TRIANGLES, (int)vao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
 
