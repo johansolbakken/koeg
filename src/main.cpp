@@ -1,10 +1,7 @@
-#include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "log.h"
-
-#include <string>
 
 #include "shader.h"
 #include "vertexarray.h"
@@ -48,9 +45,9 @@ int main()
 	glViewport(0, 0, width, height);
 
 	float vertices[] = {
-			-0.5f, -0.5f, 0.0f, // left
-			0.5f, -0.5f, 0.0f, // right
-			0.0f, 0.5f, 0.0f  // top
+			-0.5f, -0.5f, 0.0f, 1.0, 0.0, 0.0, 1.0,
+			0.5f, -0.5f, 0.0f, 0.0, 1.0, 0.0, 1.0,
+			0.0f, 0.5f, 0.0f, 0.0, 0.0, 1.0, 1.0
 	};
 
 	uint32_t indices[] = {
@@ -62,19 +59,22 @@ int main()
 
 	auto vao = std::make_shared<VertexArray>();
 	auto vbo = std::make_shared<VertexBuffer>(vertices, sizeof(vertices));
-	vao->addBuffer(vbo);
+	vao->addBuffer(vbo, {
+			{ 3, VertexDataType::Float, false },
+			{ 4, VertexDataType::Float, false }
+	});
 
 	auto ebo = std::make_shared<IndexBuffer>(indices, sizeof(indices) / sizeof(uint32_t));
+	vao->setIndexBuffer(ebo);
 
 	while (!glfwWindowShouldClose(window))
 	{
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		shader.bind();
 		vao->bind();
-		ebo->bind();
-		glDrawElements(GL_TRIANGLES, (int)ebo->count(), GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_TRIANGLES, (int)vao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
