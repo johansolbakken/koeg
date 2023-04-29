@@ -1,60 +1,76 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "openglapi.h"
 
 #include "log.h"
 
 #include "shader.h"
 #include "vertexarray.h"
 #include "texture.h"
+#include "cameracontroller.h"
+#include "window.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include <chrono>
+
+double getTime()
+{
+	return std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch())
+				   .count() /
+		   1000.0;
+}
+
+extern Window* inputWindow;
 
 int main()
 {
 	LOG_INFO("Le game");
 
-	if (!glfwInit())
-	{
-		LOG_ERROR("Failed to initialize GLFW");
-		return -1;
-	}
+	Window window("Le game", 1280, 1280 * 9 / 16);
+	inputWindow = &window;
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	// cube
+	float cubeVertices[] = {
+			-0.1, -0.1, 0.1,
+			0.1, -0.1, 0.1,
+			0.1, 0.1, 0.1,
+			-0.1, 0.1, 0.1,
+			-0.1, -0.1, -0.1,
+			0.1, -0.1, -0.1,
+			0.1, 0.1, -0.1,
+			-0.1, 0.1, -0.1
+	};
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL", nullptr, nullptr);
-	if (window == nullptr)
-	{
-		LOG_ERROR("Failed to create GLFW window");
-		glfwTerminate();
-		return -1;
-	}
+	uint32_t cubeIndices[] = {
+			0, 1, 2,
+			2, 3, 0,
+			1, 5, 6,
+			6, 2, 1,
+			7, 6, 5,
+			5, 4, 7,
+			4, 0, 3,
+			3, 7, 4,
+			4, 5, 1,
+			1, 0, 4,
+			3, 2, 6,
+			6, 7, 3
+	};
 
-	glfwMakeContextCurrent(window);
+	auto cubeVao = std::make_shared<VertexArray>();
+	auto cubeVbo = std::make_shared<VertexBuffer>(cubeVertices, sizeof(cubeVertices));
+	auto cubeIbo = std::make_shared<IndexBuffer>(cubeIndices, sizeof(cubeIndices) / sizeof(uint32_t));
+	cubeVao->addBuffer(cubeVbo, {{ 3, VertexDataType::Float }});
+	cubeVao->setIndexBuffer(cubeIbo);
 
-	if (!gladLoadGL())
-	{
-		LOG_ERROR("Failed to initialize GLAD");
-		return -1;
-	}
-
-	std::string version = (char*)glGetString(GL_VERSION);
-	LOG_INFO("OpenGL version: {}", version);
-
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-	glViewport(0, 0, width, height);
+	// pyramid
 
 	float pyramidVertices[] = {
 			-0.5, 0.0, 0.5, 0.83, 0.70, 0.44, 0.0, 0.0,
 			-0.5, 0.0, -0.5, 0.83, 0.70, 0.44, 5.0, 0.0,
 			0.5, 0.0, -0.5, 0.83, 0.70, 0.44, 0.0, 0.0,
 			0.5, 0.0, 0.5, 0.83, 0.70, 0.44, 5.0, 0.0,
-			0.0, 0.8, 0.0, 0.92, 0.86, 0.76, 2.5, 5.0
-	};
+			0.0, 0.8, 0.0, 0.92, 0.86, 0.76, 2.5, 5.0 };
 
 	auto pyramidIndices = new uint32_t[18]{
 			0, 1, 2,
@@ -62,8 +78,7 @@ int main()
 			0, 4, 1,
 			1, 4, 2,
 			2, 4, 3,
-			3, 4, 0
-	};
+			3, 4, 0 };
 
 	auto pyramidVao = std::make_shared<VertexArray>();
 	auto pyramidVbo = std::make_shared<VertexBuffer>(pyramidVertices, sizeof(pyramidVertices));
@@ -85,11 +100,10 @@ int main()
 
 	uint32_t indices[] = {
 			0, 1, 2,
-			2, 3, 0
-	};
+			2, 3, 0 };
 
 	Shader shader("shaders/default.vert", "shaders/default.frag");
-	shader.bind();
+	Shader lightShader("shaders/light.vert", "shaders/light.frag");
 
 	auto vao = std::make_shared<VertexArray>();
 	auto vbo = std::make_shared<VertexBuffer>(vertices, sizeof(vertices));
@@ -106,35 +120,65 @@ int main()
 	Texture texture("textures/popcat.jpg");
 	Texture brick("textures/brick.jpeg");
 
+	auto camera = std::make_shared<Camera>();
+	auto cameraController = std::make_shared<CameraController>(camera);
+
 	glEnable(GL_DEPTH_TEST);
 
-	while (!glfwWindowShouldClose(window))
+	double lastTime = getTime();
+	while (!window.
+
+			shouldClose()
+
+			)
 	{
+		double currentTime = getTime();
+		double deltaTime = currentTime - lastTime;
+		lastTime = currentTime;
+
+		cameraController->update(deltaTime);
+
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		auto model = glm::mat4(1.0f);
-		model = glm::rotate(model, (float)glfwGetTime() / 2.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+		{
+			auto model = glm::mat4(1.0f);
+			model = glm::rotate(model, (float)getTime() / 2.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
-		auto view = glm::mat4(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, -0.5f, -2.0f));
+			auto view = camera->viewMatrix();
+			auto projection = camera->projectionMatrix();
+			auto mvp = projection * view * model;
 
-		auto projection = glm::mat4(1.0f);
-		projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+			texture.
 
-		auto mvp = projection * view * model;
+					bind();
 
-		texture.bind();
-		shader.bind();
-		shader.setUniform1i("texture1", 0);
-		shader.setUniformMat4f("mvp", mvp);
-		pyramidVao->bind();
-		glDrawElements(GL_TRIANGLES, (int)pyramidVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
+			shader.
 
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+					bind();
+
+			shader.setUniform1i("texture1", 0);
+			shader.setUniformMat4f("mvp", mvp);
+			pyramidVao->bind();
+
+			glDrawElements(GL_TRIANGLES, (int)pyramidVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
+		}
+
+		{
+			auto model = glm::mat4(1.0f);
+			model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+			auto view = camera->viewMatrix();
+			auto projection = camera->projectionMatrix();
+			auto mvp = projection * view * model;
+
+			lightShader.bind();
+			lightShader.setUniformMat4f("mvp", mvp);
+			cubeVao->bind();
+
+			glDrawElements(GL_TRIANGLES, (int)cubeVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
+		}
+
+		window.update();
 	}
-
-	glfwTerminate();
 	return 0;
 }
