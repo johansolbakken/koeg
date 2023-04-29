@@ -7,6 +7,8 @@
 #include "texture.h"
 #include "cameracontroller.h"
 #include "window.h"
+#include "mesh.h"
+#include "renderer.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -23,18 +25,6 @@ double getTime()
 
 extern Window* inputWindow;
 
-struct Material
-{
-	std::pair<uint32_t, std::shared_ptr<Texture>> diffuse;
-	std::pair<uint32_t, std::shared_ptr<Texture>> specular;
-	float shininess;
-
-	void bind()
-	{
-		diffuse.second->bind(diffuse.first);
-		specular.second->bind(specular.first);
-	}
-};
 
 int main()
 {
@@ -43,148 +33,76 @@ int main()
 	Window window("Le game", 1280, 1280 * 9 / 16);
 	inputWindow = &window;
 
-	// cube
-	float cubeVertices[] = {
-			-0.1, -0.1, 0.1,
-			0.1, -0.1, 0.1,
-			0.1, 0.1, 0.1,
-			-0.1, 0.1, 0.1,
-			-0.1, -0.1, -0.1,
-			0.1, -0.1, -0.1,
-			0.1, 0.1, -0.1,
-			-0.1, 0.1, -0.1
-	};
+	uint8_t whiteColor[4] = { 255, 255, 255, 255 };
+	auto whiteDiff = Texture::create(TextureType::Diffuse, TextureFormat::Rgba, 1, 1, 4, whiteColor);
+	auto whiteSpec = Texture::create(TextureType::Specular, TextureFormat::Rgba, 1, 1, 4, whiteColor);
+	auto texture = Texture::create(TextureType::Diffuse, TextureFormat::Rgba, "textures/popcat.jpg");
+	auto brick = Texture::create(TextureType::Diffuse, TextureFormat::Rgba, "textures/brick.jpeg");
+	auto planks = Texture::create(TextureType::Diffuse, TextureFormat::Rgba, "textures/planks.png");
+	auto planksSpec = Texture::create(TextureType::Specular, TextureFormat::Red, "textures/planksSpec.png");
 
-	uint32_t cubeIndices[] = {
-			0, 1, 2,
-			2, 3, 0,
-			1, 5, 6,
-			6, 2, 1,
-			7, 6, 5,
-			5, 4, 7,
-			4, 0, 3,
-			3, 7, 4,
-			4, 5, 1,
-			1, 0, 4,
-			3, 2, 6,
-			6, 7, 3
-	};
+	std::vector<Vertex> vertices =
+			{ //               COORDINATES           /            COLORS          /           NORMALS         /       TEXTURE COORDINATES    //
+					Vertex{ glm::vec3(-1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+							glm::vec2(0.0f, 0.0f) },
+					Vertex{ glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+							glm::vec2(0.0f, 1.0f) },
+					Vertex{ glm::vec3(1.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+							glm::vec2(1.0f, 1.0f) },
+					Vertex{ glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+							glm::vec2(1.0f, 0.0f) }
+			};
 
-	auto cubeVao = std::make_shared<VertexArray>();
-	auto cubeVbo = std::make_shared<VertexBuffer>(cubeVertices, sizeof(cubeVertices));
-	auto cubeIbo = std::make_shared<IndexBuffer>(cubeIndices, sizeof(cubeIndices) / sizeof(uint32_t));
-	cubeVao->addBuffer(cubeVbo, {{ 3, VertexDataType::Float }});
-	cubeVao->setIndexBuffer(cubeIbo);
+// Indices for vertices order
+	std::vector<uint32_t> indices =
+			{
+					0, 1, 2,
+					0, 2, 3
+			};
 
-	// pyramid
+	std::vector<Vertex> lightVertices =
+			{ //     COORDINATES     //
+					Vertex{ glm::vec3(-0.1f, -0.1f, 0.1f) },
+					Vertex{ glm::vec3(-0.1f, -0.1f, -0.1f) },
+					Vertex{ glm::vec3(0.1f, -0.1f, -0.1f) },
+					Vertex{ glm::vec3(0.1f, -0.1f, 0.1f) },
+					Vertex{ glm::vec3(-0.1f, 0.1f, 0.1f) },
+					Vertex{ glm::vec3(-0.1f, 0.1f, -0.1f) },
+					Vertex{ glm::vec3(0.1f, 0.1f, -0.1f) },
+					Vertex{ glm::vec3(0.1f, 0.1f, 0.1f) }
+			};
 
-	float pyramidVertices[] = {
-			//     COORDINATES     /        COLORS          /    TexCoord   /        NORMALS       //
-			-0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, // Bottom side
-			-0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 5.0f, 0.0f, -1.0f, 0.0f, // Bottom side
-			0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 5.0f, 0.0f, -1.0f, 0.0f, // Bottom side
-			0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, 0.0f, -1.0f, 0.0f, // Bottom side
+	std::vector<uint32_t> lightIndices =
+			{
+					0, 1, 2,
+					0, 2, 3,
+					0, 4, 7,
+					0, 7, 3,
+					3, 7, 6,
+					3, 6, 2,
+					2, 6, 5,
+					2, 5, 1,
+					1, 5, 4,
+					1, 4, 0,
+					4, 5, 6,
+					4, 6, 7
+			};
 
-			-0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, -0.8f, 0.5f, 0.0f, // Left Side
-			-0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, -0.8f, 0.5f, 0.0f, // Left Side
-			0.0f, 0.8f, 0.0f, 0.92f, 0.86f, 0.76f, 2.5f, 5.0f, -0.8f, 0.5f, 0.0f, // Left Side
+	auto cube = Mesh::create(lightVertices, lightIndices, {});
+	auto plane = Mesh::create(vertices, indices, { planks, planksSpec });
 
-			-0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, 0.0f, 0.5f, -0.8f, // Non-facing side
-			0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, 0.0f, 0.5f, -0.8f, // Non-facing side
-			0.0f, 0.8f, 0.0f, 0.92f, 0.86f, 0.76f, 2.5f, 5.0f, 0.0f, 0.5f, -0.8f, // Non-facing side
-
-			0.5f, 0.0f, -0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, 0.8f, 0.5f, 0.0f, // Right side
-			0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, 0.8f, 0.5f, 0.0f, // Right side
-			0.0f, 0.8f, 0.0f, 0.92f, 0.86f, 0.76f, 2.5f, 5.0f, 0.8f, 0.5f, 0.0f, // Right side
-
-			0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 5.0f, 0.0f, 0.0f, 0.5f, 0.8f, // Facing side
-			-0.5f, 0.0f, 0.5f, 0.83f, 0.70f, 0.44f, 0.0f, 0.0f, 0.0f, 0.5f, 0.8f, // Facing side
-			0.0f, 0.8f, 0.0f, 0.92f, 0.86f, 0.76f, 2.5f, 5.0f, 0.0f, 0.5f, 0.8f  // Facing side
-	};
-
-	auto pyramidIndices = new uint32_t[18]{
-			0, 1, 2, // Bottom side
-			0, 2, 3, // Bottom side
-			4, 6, 5, // Left side
-			7, 9, 8, // Non-facing side
-			10, 12, 11, // Right side
-			13, 15, 14 // Facing side
-	};
-
-	auto pyramidVao = std::make_shared<VertexArray>();
-	auto pyramidVbo = std::make_shared<VertexBuffer>(pyramidVertices, sizeof(pyramidVertices));
-	auto pyramidIbo = std::make_shared<IndexBuffer>(pyramidIndices, 18);
-	pyramidVao->addBuffer(pyramidVbo, {
-			{ 3, VertexDataType::Float },
-			{ 3, VertexDataType::Float },
-			{ 2, VertexDataType::Float },
-			{ 3, VertexDataType::Float }
-	});
-	pyramidVao->setIndexBuffer(pyramidIbo);
-
-	float vertices[] = {
-			// pos, color, tex
-			-0.5f, -0.5f, 0.0f, 1.0, 0.0, 0.0, 0.0, 0.0,
-			-0.5f, 0.5f, 0.0f, 0.0, 1.0, 0.0, 0.0, 1.0,
-			0.5f, 0.5f, 0.0f, 0.0, 0.0, 1.0, 1.0, 1.0,
-			0.5f, -0.5f, 0.0f, 1.0, 1.0, 1.0, 1.0, 0.0
-	};
-
-	uint32_t indices[] = {
-			0, 1, 2,
-			2, 3, 0 };
-
-	Shader shader("shaders/default.vert", "shaders/default.frag");
-	Shader lightShader("shaders/light.vert", "shaders/light.frag");
-
-	auto vao = std::make_shared<VertexArray>();
-	auto vbo = std::make_shared<VertexBuffer>(vertices, sizeof(vertices));
-	vao->addBuffer(vbo, {
-			{ 3, VertexDataType::Float, false },
-			{ 3, VertexDataType::Float, false },
-			{ 2, VertexDataType::Float, false }
-	});
-
-	auto ebo = std::make_shared<IndexBuffer>(indices, sizeof(indices) / sizeof(uint32_t));
-	vao->setIndexBuffer(ebo);
-
-	// Plane vertices
-	float planeVertices[] = {
-			// pos, color, tex, normal
-			-1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-			-1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
-			1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0,
-			1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0
-
-	};
-	uint32_t planeIndices[] = {
-			0, 1, 2,
-			2, 3, 0
-	};
-
-	auto planeVao = std::make_shared<VertexArray>();
-	auto planeVbo = std::make_shared<VertexBuffer>(planeVertices, sizeof(planeVertices));
-	planeVao->addBuffer(planeVbo, {
-			{ 3, VertexDataType::Float, false },
-			{ 3, VertexDataType::Float, false },
-			{ 2, VertexDataType::Float, false },
-			{ 3, VertexDataType::Float, false }
-	});
-	auto planeEbo = std::make_shared<IndexBuffer>(planeIndices, sizeof(planeIndices) / sizeof(uint32_t));
-	planeVao->setIndexBuffer(planeEbo);
+	auto shader = Shader::create("shaders/default.vert", "shaders/default.frag");
+	auto lightShader = Shader::create("shaders/light.vert", "shaders/light.frag");
 
 	// Texture
-	Texture texture(TextureType::Rgba, "textures/popcat.jpg");
-	Texture brick(TextureType::Rgba, "textures/brick.jpeg");
-	Texture planks(TextureType::Rgba, "textures/planks.png");
-	Texture planksSpec(TextureType::Red, "textures/planksSpec.png");
+
 /*
 	auto camera = std::make_shared<Camera>();
 	camera->setPositionWithLookAt(glm::vec3(-2.0f, 2.0f, -2.0f), glm::vec3(0.0f));
 	auto cameraController = std::make_shared<CameraController>(camera);*/
 
-	Hazel::EditorCamera editorCamera;
-	editorCamera.SetViewportSize(window.width(), window.height());
+	auto editorCamera = std::make_shared<Hazel::EditorCamera>();
+	editorCamera->SetViewportSize(window.width(), window.height());
 
 	glm::vec3 lightPos(0.5f, 0.5f, 0.5f);
 	glm::vec4 lightColor(0.8f, 0.6f, 0.3f, 1.0f);
@@ -200,64 +118,22 @@ int main()
 		double deltaTime = currentTime - lastTime;
 		lastTime = currentTime;
 
-		editorCamera.OnUpdate(deltaTime);
+		editorCamera->OnUpdate(deltaTime);
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		if (false)
-		{
-			static float angle = 0.0;
-			angle += 0.0f * deltaTime;
-			auto model = glm::mat4(1.0f);
-			model = glm::rotate(model, (float)angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		// Plane
+		auto model = glm::mat4(1.0f);
+		shader->bind();
+		shader->setUniform4f("lightColor", lightColor);
+		shader->setUniform3f("lightPos", lightPos);
+		Renderer::drawMeshHZ(plane, model, shader, editorCamera);
 
-			auto projection = editorCamera.GetViewProjection();
-			auto mvp = projection * model;
-
-			shader.bind();
-			shader.setUniform1i("texture1", 0);
-			shader.setUniformMat4f("mvp", mvp);
-			shader.setUniform4f("lightColor", lightColor);
-			shader.setUniformMat4f("model", model);
-			shader.setUniform3f("lightPos", lightPos);
-			shader.setUniform3f("viewPos", editorCamera.GetPosition());
-			pyramidVao->bind();
-
-			glDrawElements(GL_TRIANGLES, (int)pyramidVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
-		}
-
-		{
-			auto projection = editorCamera.GetViewProjection();
-			auto mvp = projection * lightModel;
-
-			lightShader.bind();
-			lightShader.setUniformMat4f("mvp", mvp);
-			lightShader.setUniform4f("lightColor", lightColor);
-			cubeVao->bind();
-
-			glDrawElements(GL_TRIANGLES, (int)cubeVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
-		}
-
-		{
-			auto model = glm::mat4(1.0f);
-			auto projection = editorCamera.GetViewProjection();
-			auto mvp = projection * model;
-
-			planks.bind();
-			planksSpec.bind(1);
-			shader.bind();
-			shader.setUniform1i("texture1", 0);
-			shader.setUniform1i("texture2", 1);
-			shader.setUniformMat4f("mvp", mvp);
-			shader.setUniform4f("lightColor", lightColor);
-			shader.setUniformMat4f("model", model);
-			shader.setUniform3f("lightPos", lightPos);
-			shader.setUniform3f("viewPos", editorCamera.GetPosition());
-			planeVao->bind();
-
-			glDrawElements(GL_TRIANGLES, (int)planeVao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
-		}
+		// Shader cube
+		lightShader->bind();
+		lightShader->setUniform4f("lightColor", lightColor);
+		Renderer::drawMeshHZ(cube, lightModel, lightShader, editorCamera);
 
 		window.update();
 	}

@@ -110,3 +110,8 @@ void Shader::setUniform4f(const std::string& name, const glm::vec4& vector)
 {
 	GLCall(glUniform4f(getUniformLocation(name), vector.x, vector.y, vector.z, vector.w));
 }
+
+std::shared_ptr<Shader> Shader::create(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
+{
+	return std::make_shared<Shader>(vertexShaderPath, fragmentShaderPath);
+}

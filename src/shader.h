@@ -22,7 +22,10 @@ public:
 	void setUniformMat4f(const std::string& name, const glm::mat4& matrix);
 
 	void setUniform3f(const std::string& name, const glm::vec3& vector);
+
 	void setUniform4f(const std::string& name, const glm::vec4& vector);
+
+	static std::shared_ptr<Shader> create(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
 
 private:
 	uint32_t m_rendererId;

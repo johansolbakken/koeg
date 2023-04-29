@@ -36,8 +36,11 @@ public:
 
 	std::shared_ptr<IndexBuffer> indexBuffer() const;
 
+	static std::shared_ptr<VertexArray> create();
+
 private:
 	uint32_t m_rendererId{};
+	std::vector<std::shared_ptr<VertexBuffer>> m_vertexBuffers{};
 	std::vector<VertexLayoutElement> m_layout{};
 	std::shared_ptr<IndexBuffer> m_indexBuffer{};
 };

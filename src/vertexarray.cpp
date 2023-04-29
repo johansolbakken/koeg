@@ -72,6 +72,8 @@ void VertexArray::addBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer,
 		offset += element.count * getSizeOfType(element.type);
 	}
 
+	m_vertexBuffers.push_back(vertexBuffer);
+
 	unbind();
 }
 
@@ -86,4 +88,9 @@ void VertexArray::setIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer
 std::shared_ptr<IndexBuffer> VertexArray::indexBuffer() const
 {
 	return m_indexBuffer;
+}
+
+std::shared_ptr<VertexArray> VertexArray::create()
+{
+	return std::make_shared<VertexArray>();
 }
