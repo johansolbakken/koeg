@@ -13,5 +13,5 @@ target_include_directories(glad PUBLIC vendor/glad/include)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(Koeg ${SOURCES})
-target_include_directories(Koeg PRIVATE src vendor/glfw/include vendor/glad/include vendor/fmt/include)
+target_include_directories(Koeg PRIVATE src vendor/glfw/include vendor/glad/include vendor/fmt/include vendor/glm)
 target_link_libraries(Koeg glfw glad fmt)
