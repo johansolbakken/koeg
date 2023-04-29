@@ -36,7 +36,47 @@ vec4 point_light()
     return texture(texture1, TexCoord) * lightColor * (diffuse * intensity + ambient) + texture(texture2, TexCoord).r * specular * intensity;
 }
 
+vec4 directional_light()
+{
+    float ambient = 0.2;
+
+    vec3 normal = normalize(Normal);
+    vec3 lightDir = normalize(vec3(1.0, 1.0, 0.0));
+    float diffuse = max(dot(normal, lightDir), 0.0);
+
+    float specularLight = 0.5;
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+    float specular = specularLight * spec;
+
+    return texture(texture1, TexCoord) * lightColor * (diffuse + ambient) + texture(texture2, TexCoord).r * specular;
+}
+
+vec4 spot_light()
+{
+    float outerCone = 0.9;
+    float innerCone = 0.95;
+
+    float ambient = 0.2;
+
+    vec3 normal = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+    float diffuse = max(dot(normal, lightDir), 0.0);
+
+    float specularLight = 0.5;
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+    float specular = specularLight * spec;
+
+    float angle = dot(vec3(0.0, -1.0, 0.0), -lightDir);
+    float intensity = clamp((angle - outerCone) / (innerCone - outerCone), 0.0, 1.0);
+
+    return texture(texture1, TexCoord) * lightColor * (diffuse * intensity + ambient) + texture(texture2, TexCoord).r * specular * intensity;
+}
+
 void main()
 {
-    FragColor = point_light();
+    FragColor = spot_light();
 }
