@@ -23,7 +23,7 @@ std::string textureTypeToString(TextureType type)
 }
 
 Texture::Texture(TextureType type, TextureFormat format, const std::string& path)
-		: m_format(format), m_filePath(path), m_localBuffer(nullptr), m_width(0), m_height(0), m_bpp(0)
+		: m_type(type), m_format(format), m_filePath(path), m_localBuffer(nullptr), m_width(0), m_height(0), m_bpp(0)
 {
 	int width, height, bpp;
 	stbi_set_flip_vertically_on_load(true);

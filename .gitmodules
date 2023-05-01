@@ -10,3 +10,9 @@
 [submodule "vendor/json"]
 	path = vendor/json
 	url = git@github.com:nlohmann/json.git
+[submodule "vendor/assimp"]
+	path = vendor/assimp
+	url = git@github.com:assimp/assimp.git
+[submodule "vendor/glTF-Sample-Models"]
+	path = vendor/glTF-Sample-Models
+	url = git@github.com:KhronosGroup/glTF-Sample-Models.git

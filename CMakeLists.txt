@@ -7,11 +7,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(vendor/glfw)
 add_subdirectory(vendor/fmt)
+add_subdirectory(vendor/assimp)
 
 add_library(glad STATIC vendor/glad/src/glad.c)
 target_include_directories(glad PUBLIC vendor/glad/include)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_executable(Koeg ${SOURCES})
-target_include_directories(Koeg PRIVATE src vendor/glfw/include vendor/glad/include vendor/fmt/include vendor/glm)
-target_link_libraries(Koeg glfw glad fmt)
+target_include_directories(Koeg PRIVATE src vendor/glfw/include vendor/glad/include vendor/fmt/include vendor/glm vendor/json/include vendor/assimp/include)
+target_link_libraries(Koeg glfw glad fmt assimp)
