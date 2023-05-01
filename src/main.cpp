@@ -37,10 +37,10 @@ int main()
 	uint8_t whiteColor[4] = { 255, 255, 255, 255 };
 	auto whiteDiff = Texture::create(TextureType::Diffuse, TextureFormat::Rgba, 1, 1, 4, whiteColor);
 	auto whiteSpec = Texture::create(TextureType::Specular, TextureFormat::Rgba, 1, 1, 4, whiteColor);
-	auto texture = Texture::create(TextureType::Diffuse, TextureFormat::Rgba, "textures/popcat.jpg");
-	auto brick = Texture::create(TextureType::Diffuse, TextureFormat::Rgba, "textures/brick.jpeg");
-	auto planks = Texture::create(TextureType::Diffuse, TextureFormat::Rgba, "textures/planks.png");
-	auto planksSpec = Texture::create(TextureType::Specular, TextureFormat::Red, "textures/planksSpec.png");
+	auto texture = Texture::create(TextureType::Diffuse, "textures/popcat.jpg");
+	auto brick = Texture::create(TextureType::Diffuse, "textures/brick.jpeg");
+	auto planks = Texture::create(TextureType::Diffuse, "textures/planks.png");
+	auto planksSpec = Texture::create(TextureType::Specular, "textures/planksSpec.png");
 
 	std::vector<Vertex> vertices = { //               COORDINATES           /            COLORS          /           NORMALS         /       TEXTURE COORDINATES    //
 			Vertex{ glm::vec3(-1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f),
@@ -124,12 +124,12 @@ int main()
 
 		// Plane
 		auto transform = glm::mat4(1.0f);
-		transform = glm::scale(transform, glm::vec3(10.0f));
+		//transform = glm::scale(transform, glm::vec3(50.0f));
 		shader->bind();
 		shader->setUniform4f("lightColor", lightColor);
 		shader->setUniform3f("lightPos", lightPos);
-		// 3Renderer::drawMeshHZ(plane, transform, shader, editorCamera);
-		Renderer::drawModelHZ(model, transform, shader, editorCamera);
+		Renderer::drawMeshHZ(plane, transform, shader, editorCamera);
+		//Renderer::drawModelHZ(model, transform, shader, editorCamera);
 
 		// Shader cube
 		lightShader->bind();

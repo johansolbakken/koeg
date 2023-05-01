@@ -5,7 +5,13 @@
 enum class TextureFormat
 {
 	Rgba,
-	Red
+	Rgb,
+	Srgb,
+	Red,
+	Depth,
+	DepthStencil,
+	Stencil,
+	Depth24Stencil8
 };
 
 enum class TextureType
@@ -22,6 +28,8 @@ class Texture
 {
 public:
 	Texture(TextureType type, TextureFormat format, const std::string& path);
+
+	Texture(TextureType type, const std::string& path);
 
 	Texture(TextureType type, TextureFormat format, int width, int height, int bpp,
 			uint8_t* localBuffer);
@@ -52,11 +60,17 @@ public:
 		return m_type;
 	}
 
+	inline std::string path() const
+	{
+		return m_filePath;
+	}
+
 	static std::shared_ptr<Texture> create(TextureType type, TextureFormat format, const std::string& path);
 
 	static std::shared_ptr<Texture> create(TextureType type, TextureFormat format, int width, int height, int bpp,
 			uint8_t* localBuffer);
 
+	static std::shared_ptr<Texture> create(TextureType type, const std::string& path);
 
 private:
 	uint32_t m_rendererId;

@@ -56,16 +56,15 @@ void Renderer::drawMeshHZ(const std::shared_ptr<Mesh>& mesh, const glm::mat4& tr
 	if (numDiffuse == 0)
 	{
 		whiteDiffuse->bind(i);
-		shader->setUniform1i("diffuse0", i);
+		shader->setUniform1i("diffuse" + std::to_string(numDiffuse++), i);
 		i++;
 	}
 	if (numSpecular == 0)
 	{
 		whiteSpec->bind(i);
-		shader->setUniform1i("specular0", i);
+		shader->setUniform1i("specular" + std::to_string(numSpecular++), i);
 		i++;
 	}
-
 
 	GLCall(glDrawElements(GL_TRIANGLES, (int)mesh->vertexArray()->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr));
 }
